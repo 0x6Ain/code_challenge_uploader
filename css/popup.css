@@ -1,0 +1,46 @@
+.onboarding {
+  font-family: sans-serif;
+  border-top: solid black 1px;
+  font-weight: 500;
+  padding-top: 2%;
+  font-size: medium;
+}
+
+#onffbox {
+  appearance: none;
+}
+
+#onffmain {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  width: 55px;
+  height: 25px;
+  border: 0px solid black;
+  border-radius: 20px;
+  transition: 0.2s;
+  background: #bbb;
+}
+
+#onffball {
+  position: absolute;
+  display: inline-block;
+  width: 21px;
+  height: 21px;
+  top: 2px;
+  left: 4px;
+  border-radius: 20px;
+  transition: 0.2s;
+  background: #eee;
+}
+
+#onffbox:checked + #onffmain {
+  border: 0px solid #8faadc;
+  background: #2fde54;
+}
+
+#onffbox:checked + #onffmain #onffball {
+  left: 30px;
+  border: 0px solid #2f5496;
+  /* background: #2f5496; */
+}
