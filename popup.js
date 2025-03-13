@@ -1,5 +1,24 @@
 /* global oAuth2 */
 /* eslint no-undef: "error" */
+const STORAGE_KEYS = {
+  TOKEN: "code_challenge_uploader_token",
+  AVATAR: "code_challenge_uploader_avatar",
+  USERNAME: "code_challenge_uploader_username",
+};
+// UI update
+const updateUI = {
+  avatar: (url) => {
+    if (!url) return;
+    const avatarImg = document.getElementById("avatar");
+    avatarImg.src = url;
+  },
+
+  username: (name) => {
+    if (!name) return;
+    const usernameElement = document.getElementById("username");
+    usernameElement.textContent = name;
+  },
+};
 
 let action = false;
 
@@ -12,7 +31,7 @@ $("#authenticate").on("click", () => {
 $("#welcome_URL").attr("href", chrome.runtime.getURL("welcome.html"));
 $("#hook_URL").attr("href", chrome.runtime.getURL("welcome.html"));
 
-chrome.storage.local.get("code_challenge_uploader_token", (data) => {
+chrome.storage.local.get(STORAGE_KEYS.TOKEN, (data) => {
   const token = data.code_challenge_uploader_token;
   if (token === null || token === undefined) {
     action = true;
@@ -51,6 +70,14 @@ chrome.storage.local.get("code_challenge_uploader_token", (data) => {
               );
             } else {
               $("#hook_mode").show();
+              // 사용자 정보 로드
+              chrome.storage.local.get(
+                [STORAGE_KEYS.AVATAR, STORAGE_KEYS.USERNAME],
+                (result) => {
+                  updateUI.avatar(result[STORAGE_KEYS.AVATAR]);
+                  updateUI.username(result[STORAGE_KEYS.USERNAME]);
+                }
+              );
             }
           });
         } else if (xhr.status === 401) {

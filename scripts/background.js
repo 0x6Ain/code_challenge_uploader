@@ -1,18 +1,15 @@
 function handleMessage(request, sender, sendResponse) {
-  console.log(request);
   if (request.action === "customCommitMessageUpdated") {
     chrome.storage.local.set({ custom_commit_message: request.message });
   }
 
   if (request && request.closeWebPage === true && request.isSuccess === true) {
-    console.log(request);
-    /* Set username */
+    /* Set user property */
     chrome.storage.local.set({
       code_challenge_uploader_username: request.username,
+      code_challenge_uploader_avatar: request.avatar,
+      code_challenge_uploader_token: request.token,
     });
-
-    /* Set token */
-    chrome.storage.local.set({ code_challenge_uploader_token: request.token });
 
     /* Close pipe */
     chrome.storage.local.set({ pipe_code_challenge_uploader: false }, () => {

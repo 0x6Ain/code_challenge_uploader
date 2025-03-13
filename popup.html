@@ -31,25 +31,32 @@
           </button>
         </div>
 
-
         <!-- Repo Hook mode -->
-        <!-- TODO -->
         <div id="hook_mode" hidden>
-            Hook mode
+          <img id="avatar" alt="User Avatar" style="width: 100px; height: 100px; border-radius: 50%;" />
+          <p id="username"></p>
+          <a
+            id="hook_URL"
+            href=""
+            target="blank"
+            class="ui secondary button"
+          >
+            <i class="icon github"></i>
+            Set up Repository
+          </a>
         </div>
 
+        <!-- TODO -->
         <div id="commit_mode" hidden>
           <p id="repo_url" class="ui small header" style="margin-top: 5px; margin-bottom: 6px !important"></p>
           commit_mode
-        </div>
-
-
-        <!-- 기능 on/off -->
-        <div style="margin-top: 10px">
-          <input type="checkbox" id="onffbox" />
-          <label for="onffbox" id="onffmain">
-            <span id="onffball"></span>
-          </label>
+          <!-- 기능 on/off -->
+          <div style="margin-top: 10px">
+            <input type="checkbox" id="onffbox" />
+            <label for="onffbox" id="onffmain">
+              <span id="onffball"></span>
+            </label>
+          </div>
         </div>
       </div>
 

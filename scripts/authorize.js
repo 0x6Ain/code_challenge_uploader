@@ -75,7 +75,7 @@ const localAuth = {
     xhr.addEventListener("readystatechange", function () {
       if (xhr.readyState === 4) {
         if (xhr.status === 200) {
-          const username = JSON.parse(xhr.responseText).login;
+          const data = JSON.parse(xhr.responseText);
           chrome.runtime.sendMessage({
             closeWebPage: true,
             isSuccess: true,
