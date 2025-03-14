@@ -33,14 +33,13 @@
 
         <!-- Repo Hook mode -->
         <div id="hook_mode" hidden>
-          <img id="avatar" alt="User Avatar" style="width: 100px; height: 100px; border-radius: 50%;" />
+          <img
+            id="avatar"
+            alt="User Avatar"
+            style="width: 100px; height: 100px; border-radius: 50%"
+          />
           <p id="username"></p>
-          <a
-            id="hook_URL"
-            href=""
-            target="blank"
-            class="ui secondary button"
-          >
+          <a id="hook_URL" href="" target="blank" class="ui secondary button">
             <i class="icon github"></i>
             Set up Repository
           </a>
@@ -48,7 +47,11 @@
 
         <!-- TODO -->
         <div id="commit_mode" hidden>
-          <p id="repo_url" class="ui small header" style="margin-top: 5px; margin-bottom: 6px !important"></p>
+          <p
+            id="repo_url"
+            class="ui small header"
+            style="margin-top: 5px; margin-bottom: 6px !important"
+          ></p>
           commit_mode
           <!-- 기능 on/off -->
           <div style="margin-top: 10px">
@@ -60,6 +63,13 @@
         </div>
       </div>
 
+      <!-- Welcome_URL -->
+      <a id="welcome_URL" href="" target="_blank"
+        ><i class="ui grey globe icon"></i
+      ></a>
+    </div>
+
+    <script src="utils/constants.js"></script>
     <script src="scripts/oauth2.js"></script>
     <script type="text/javascript" src="popup.js"></script>
   </body>

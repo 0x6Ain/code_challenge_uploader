@@ -1,10 +1,3 @@
-const STORAGE_KEYS = {
-  MODE: "mode_type",
-  TOKEN: "code_challenge_uploader_token",
-  HOOK: "code_challenge_uploader_hook",
-  USERNAME: "code_challenge_uploader_username",
-};
-
 const ERROR_MESSAGES = {
   // Authorize
   NO_TOKEN:
