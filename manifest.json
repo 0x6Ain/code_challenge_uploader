@@ -21,6 +21,11 @@
       "matches": ["https://github.com/*"],
       "js": ["scripts/authorize.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://leetcode.com/*"],
+      "js": ["scripts/leetcode.js"],
+      "run_at": "document_idle"
     }
   ]
 }
