@@ -1,3 +1,12 @@
+/* KEYS */
+const STORAGE_KEYS = {
+  TOKEN: "code_challenge_uploader_token",
+  MODE: "mode_type",
+  HOOK: "code_challenge_uploader_hook",
+  STATS: "stats",
+};
+
+const PUSH_BTN_ID = "manualGitSubmit";
 /* Enum for languages supported by LeetCode. */
 const languages = {
   C: ".c",
@@ -29,9 +38,9 @@ const languages = {
 };
 
 /* Commit messages */
-const readmeMsg = "Create README - LeetHub";
-const discussionMsg = "Prepend discussion post - LeetHub";
-const createNotesMsg = "Attach NOTES - LeetHub";
+const readmeMsg = "Create README";
+const discussionMsg = "Prepend discussion post";
+const createNotesMsg = "Attach NOTES";
 
 // problem types
 const NORMAL_PROBLEM = 0;
@@ -86,7 +95,7 @@ const getCustomCommitMessage = (problemContext) => {
 };
 
 /* Main function for uploading code to GitHub repo, and callback cb is called if success */
-const upload = (
+const upload = async (
   token,
   hook,
   code,
@@ -96,8 +105,6 @@ const upload = (
   commitMsg,
   cb = undefined
 ) => {
-  const URL = `https://api.github.com/repos/${hook}/contents/LeetCode/${difficulty}/${problem}/${filename}`;
-
   /* Define Payload */
   let data = {
     message: commitMsg,
@@ -115,67 +122,38 @@ const upload = (
     },
     body: data,
   };
+
+  const URL = `https://api.github.com/repos/${hook}/contents/LeetCode/${difficulty}/${problem}/${filename}`;
   let updatedSha;
+  const res = await fetch(URL, options);
+  var body;
 
-  return fetch(URL, options)
-    .then((res) => {
-      if (res.status === 200 || res.status === 201) {
-        return res.json();
-      } else if (res.status === 409) {
-        throw new Error("409");
-      }
-    })
-    .then(async (body) => {
-      updatedSha = body.content.sha; // get updated SHA.
-      stats = await getAndInitializeStats(problem);
-      stats.shas[problem][filename] = updatedSha;
-      return chrome.storage.local.set({ stats });
-    })
-    .then(() => {
-      console.log(`Successfully committed ${filename} to github`);
-      if (cb != undefined) {
-        cb();
-      }
-    });
+  if (res.status === 200 || res.status === 201) {
+    return res.json();
+  } else if (res.status === 409) {
+    throw new Error("409");
+  }
+  updatedSha = body.content.sha; // get updated SHA.
+  stats = await getAndInitializeStats(problem);
+  stats.shas[problem][filename] = updatedSha;
+
+  console.log(`Successfully committed ${filename} to github`);
+  if (cb != undefined) cb();
 };
 
-const getAndInitializeStats = (problem) => {
-  return chrome.storage.local.get("stats").then(({ stats }) => {
-    if (stats == null || stats == {}) {
-      // create stats object
-      stats = {};
-      stats.solved = 0;
-      stats.easy = 0;
-      stats.medium = 0;
-      stats.hard = 0;
-      stats.shas = {};
-    }
+const getAndInitializeStats = async (problem) => {
+  let { stats } = await chrome.storage.local.get(STORAGE_KEYS.STATS);
+  if (stats == null || stats == {}) {
+    // create stats object
+    stats = {};
+    stats.shas = {};
+  }
 
-    if (stats.shas[problem] == null) {
-      stats.shas[problem] = {};
-    }
+  if (stats.shas[problem] == null) {
+    stats.shas[problem] = {};
+  }
 
-    return stats;
-  });
-};
-
-const incrementStats = () => {
-  return chrome.storage.local.get("stats").then(({ stats }) => {
-    stats.solved += 1;
-    stats.easy += difficulty === "Easy" ? 1 : 0;
-    stats.medium += difficulty === "Medium" ? 1 : 0;
-    stats.hard += difficulty === "Hard" ? 1 : 0;
-    return chrome.storage.local.set({ stats });
-  });
-};
-
-const checkAlreadyCompleted = (problemName) => {
-  return chrome.storage.local.get("stats").then(({ stats }) => {
-    if (stats?.shas?.[problemName] == null) {
-      return false;
-    }
-    return true;
-  });
+  return stats;
 };
 
 /* Main function for updating code on GitHub Repo */
@@ -223,7 +201,7 @@ const update = (
     );
 };
 
-function uploadGit(
+const uploadGit = async (
   code,
   problemName,
   fileName,
@@ -232,46 +210,35 @@ function uploadGit(
   shouldPrependDiscussionPosts = false,
   cb = undefined,
   _diff = undefined
-) {
+) => {
   // Assign difficulty
-  if (_diff && _diff !== undefined) {
-    difficulty = _diff.trim();
-  }
+  if (_diff) difficulty = _diff.trim();
 
-  let token;
-  let hook;
+  const { [STORAGE_KEYS.TOKEN]: token } = await chrome.storage.local.get(
+    STORAGE_KEYS.TOKEN
+  );
+  if (!token) throw new Error("token is undefined");
 
-  return chrome.storage.local
-    .get("leethub_token")
-    .then(({ leethub_token }) => {
-      token = leethub_token;
-      if (leethub_token == undefined) {
-        throw new Error("leethub token is undefined");
-      }
-      return chrome.storage.local.get("mode_type");
-    })
-    .then(({ mode_type }) => {
-      if (mode_type !== "commit") {
-        throw new Error("leethub mode is not commit");
-      }
-      return chrome.storage.local.get("leethub_hook");
-    })
-    .then(({ leethub_hook }) => {
-      hook = leethub_hook;
-      if (!hook) {
-        throw new Error("leethub hook not defined");
-      }
-      return chrome.storage.local.get("stats");
-    })
-    .then(({ stats }) => {
-      if (action === "upload") {
-        /* Get SHA, if it exists */
-        const sha =
-          stats?.shas?.[problemName]?.[fileName] !== undefined
-            ? stats.shas[problemName][fileName]
-            : "";
+  const { [STORAGE_KEYS.MODE]: mode_type } = await chrome.storage.local.get(
+    STORAGE_KEYS.MODE
+  );
+  if (mode_type !== "commit") throw new Error("mode is not commit");
 
-        return upload(
+  // hook 가져오기
+  const { [STORAGE_KEYS.HOOK]: hook } = await chrome.storage.local.get(
+    STORAGE_KEYS.HOOK
+  );
+  if (!hook) throw new Error("hook not defined");
+
+  const { [STORAGE_KEYS.STATS]: stats } = await chrome.storage.local.get(
+    STORAGE_KEYS.STATS
+  );
+  try {
+    switch (action) {
+      case "upload":
+        // SHA 가져오기 (있는 경우)
+        const sha = stats?.shas?.[problemName]?.[fileName] || "";
+        return await upload(
           token,
           hook,
           code,
@@ -281,8 +248,8 @@ function uploadGit(
           commitMsg,
           cb
         );
-      } else if (action === "update") {
-        return update(
+      case "update":
+        return await update(
           token,
           hook,
           code,
@@ -292,30 +259,29 @@ function uploadGit(
           shouldPrependDiscussionPosts,
           cb
         );
+      default:
+        throw new Error(`Invalid action: ${action}`);
+    }
+  } catch (err) {
+    // 409 충돌 에러 처리
+    if (err.message === "409") {
+      const data = await getUpdatedData(token, hook, problemName, fileName);
+      if (data) {
+        return await upload(
+          token,
+          hook,
+          code,
+          problemName,
+          fileName,
+          data.sha,
+          commitMsg,
+          cb
+        );
       }
-    })
-    .catch((err) => {
-      if (err.message === "409") {
-        return getUpdatedData(token, hook, problemName, fileName);
-      } else {
-        throw err;
-      }
-    })
-    .then((data) =>
-      data != null
-        ? upload(
-            token,
-            hook,
-            code,
-            problemName,
-            fileName,
-            data.sha,
-            commitMsg,
-            cb
-          )
-        : undefined
-    );
-}
+    }
+    throw err;
+  }
+};
 
 /* Gets updated GitHub data for the specific file in repo in question */
 async function getUpdatedData(token, hook, directory, filename) {
@@ -482,357 +448,9 @@ document.addEventListener("click", (event) => {
   }
 });
 
-function LeetCodeV1() {
-  this.progressSpinnerElementId = "leethub_progress_elem";
-  this.progressSpinnerElementClass = "leethub_progress";
-  this.injectSpinnerStyle();
-}
-LeetCodeV1.prototype.init = async function () {};
-/* Function for finding and parsing the full code. */
-/* - At first find the submission details url. */
-/* - Then send a request for the details page. */
-/* - Parse the code from the html reponse. */
-/* - Parse the stats from the html response (explore section) */
-LeetCodeV1.prototype.findAndUploadCode = function (
-  problemName,
-  fileName,
-  commitMsg,
-  action,
-  cb = undefined
-) {
-  /* Get the submission details url from the submission page. */
-  let submissionURL;
-  const e = document.getElementsByClassName("status-column__3SUg");
-  if (checkElem(e)) {
-    // for normal problem submisson
-    const submissionRef = e[1].innerHTML.split(" ")[1];
-    submissionURL =
-      "https://leetcode.com" + submissionRef.split("=")[1].slice(1, -1);
-  } else {
-    // for a submission in explore section
-    const submissionRef = document.getElementById("result-state");
-    submissionURL = submissionRef.href;
-  }
-
-  if (submissionURL == undefined) {
-    return;
-  }
-  /* Request for the submission details page */
-  return fetch(submissionURL)
-    .then((res) => {
-      if (res.status == 200) {
-        return res.text();
-      } else {
-        throw new Error("" + res.status);
-      }
-    })
-    .then((responseText) => {
-      const doc = new DOMParser().parseFromString(responseText, "text/html");
-      /* the response has a js object called pageData. */
-      /* Pagedata has the details data with code about that submission */
-      const scripts = doc.getElementsByTagName("script");
-      for (let i = 0; i < scripts.length; i++) {
-        const text = scripts[i].innerText;
-        if (text.includes("pageData")) {
-          /* Extract the full code */
-          const firstIndex = text.indexOf("submissionCode");
-          const lastIndex = text.indexOf("editCodeUrl");
-          let slicedText = text.slice(firstIndex, lastIndex);
-          /* slicedText has form "submissionCode: 'Details code'" */
-          /* Find the index of first and last single inverted coma. */
-          const firstInverted = slicedText.indexOf("'");
-          const lastInverted = slicedText.lastIndexOf("'");
-          /* Extract only the code */
-          const codeUnicoded = slicedText.slice(
-            firstInverted + 1,
-            lastInverted
-          );
-          /* The code has some unicode. Replacing all unicode with actual characters */
-          const code = codeUnicoded.replace(
-            /\\u[\dA-F]{4}/gi,
-            function (match) {
-              return String.fromCharCode(
-                parseInt(match.replace(/\\u/g, ""), 16)
-              );
-            }
-          );
-
-          /* For a submission in explore section we do not get probStat beforehand.
-            So, parse statistics from submisson page */
-          if (!commitMsg) {
-            slicedText = text.slice(
-              text.indexOf("runtime"),
-              text.indexOf("memory")
-            );
-            const resultRuntime = slicedText.slice(
-              slicedText.indexOf("'") + 1,
-              slicedText.lastIndexOf("'")
-            );
-            slicedText = text.slice(
-              text.indexOf("memory"),
-              text.indexOf("total_correct")
-            );
-            const resultMemory = slicedText.slice(
-              slicedText.indexOf("'") + 1,
-              slicedText.lastIndexOf("'")
-            );
-            commitMsg = `Time: ${resultRuntime}, Memory: ${resultMemory} - LeetHub`;
-          }
-          if (code != null) {
-            return uploadGit(
-              btoa(unescape(encodeURIComponent(code))),
-              problemName,
-              fileName,
-              commitMsg,
-              action,
-              false,
-              cb
-            );
-          }
-        }
-      }
-    });
-};
-// Returns the language extension
-LeetCodeV1.prototype.getLanguageExtension = function () {
-  const tag = [
-    ...document.getElementsByClassName("ant-select-selection-selected-value"),
-    ...document.getElementsByClassName("Select-value-label"),
-  ];
-  if (tag && tag.length > 0) {
-    for (let i = 0; i < tag.length; i += 1) {
-      const elem = tag[i].textContent;
-      if (elem !== undefined && languages[elem] !== undefined) {
-        return languages[elem];
-      }
-    }
-  }
-  return null;
-};
-/* function to get the notes if there is any
- the note should be opened atleast once for this to work
- this is because the dom is populated after data is fetched by opening the note */
-LeetCodeV1.prototype.getNotesIfAny = function () {
-  // there are no notes on expore
-  if (document.URL.startsWith("https://leetcode.com/explore/")) return "";
-
-  notes = "";
-  if (
-    checkElem(document.getElementsByClassName("notewrap__eHkN")) &&
-    checkElem(
-      document
-        .getElementsByClassName("notewrap__eHkN")[0]
-        .getElementsByClassName("CodeMirror-code")
-    )
-  ) {
-    notesdiv = document
-      .getElementsByClassName("notewrap__eHkN")[0]
-      .getElementsByClassName("CodeMirror-code")[0];
-    if (notesdiv) {
-      for (i = 0; i < notesdiv.childNodes.length; i++) {
-        if (notesdiv.childNodes[i].childNodes.length == 0) continue;
-        text = notesdiv.childNodes[i].childNodes[0].innerText;
-        if (text) {
-          notes = `${notes}\n${text.trim()}`.trim();
-        }
-      }
-    }
-  }
-  return notes.trim();
-};
-// Returns a slugged num+title variation e.g. 0001-two-sum
-LeetCodeV1.prototype.getProblemNameSlug = function () {
-  const questionElem = document.getElementsByClassName(
-    "content__u3I1 question-content__JfgR"
-  );
-  const questionDescriptionElem = document.getElementsByClassName(
-    "question-description__3U1T"
-  );
-  let questionTitle = "unknown-problem";
-  if (checkElem(questionElem)) {
-    let qtitle = document.getElementsByClassName("css-v3d350");
-    if (checkElem(qtitle)) {
-      questionTitle = qtitle[0].innerHTML;
-    }
-  } else if (checkElem(questionDescriptionElem)) {
-    let qtitle = document.getElementsByClassName("question-title");
-    if (checkElem(qtitle)) {
-      questionTitle = qtitle[0].innerText;
-    }
-  }
-  return addLeadingZeros(convertToSlug(questionTitle));
-};
-/* Gets the success state of the solution and updates html elements with new classes */
-LeetCodeV1.prototype.getSuccessStateAndUpdate = function () {
-  const successTag = document.getElementsByClassName("success__3Ai7");
-  const resultState = document.getElementById("result-state");
-
-  // check success state for a normal problem
-  if (
-    checkElem(successTag) &&
-    successTag[0].className === "success__3Ai7" &&
-    successTag[0].innerText.trim() === "Success"
-  ) {
-    console.log(successTag[0]);
-    successTag[0].classList.add("marked_as_success");
-    return true;
-  }
-  // check success state for a explore section problem
-  else if (
-    resultState &&
-    resultState.className === "text-success" &&
-    resultState.innerText === "Accepted"
-  ) {
-    resultState.classList.add("marked_as_success");
-    return true;
-  }
-
-  return false;
-};
-/* Parser function for time/space stats */
-LeetCodeV1.prototype.parseStats = function () {
-  const probStats = document.getElementsByClassName("data__HC-i");
-  if (!checkElem(probStats)) {
-    return null;
-  }
-  const time = probStats[0].textContent;
-  const timePercentile = probStats[1].textContent;
-  const space = probStats[2].textContent;
-  const spacePercentile = probStats[3].textContent;
-
-  return `Time: ${time} (${timePercentile}), Space: ${space} (${spacePercentile}) - LeetHub`;
-};
-/* Parser function for the question, question title, question difficulty, and tags */
-LeetCodeV1.prototype.parseQuestion = function () {
-  let questionUrl = window.location.href;
-  if (questionUrl.endsWith("/submissions/")) {
-    questionUrl = questionUrl.substring(
-      0,
-      questionUrl.lastIndexOf("/submissions/") + 1
-    );
-  }
-  const questionElem = document.getElementsByClassName(
-    "content__u3I1 question-content__JfgR"
-  );
-  const questionDescriptionElem = document.getElementsByClassName(
-    "question-description__3U1T"
-  );
-  if (checkElem(questionElem)) {
-    const qbody = questionElem[0].innerHTML;
-
-    // Problem title.
-    let qtitle = document.getElementsByClassName("css-v3d350");
-    if (checkElem(qtitle)) {
-      qtitle = qtitle[0].innerHTML;
-    } else {
-      qtitle = "unknown-problem";
-    }
-
-    // Problem difficulty, each problem difficulty has its own class.
-    const isHard = document.getElementsByClassName("css-t42afm");
-    const isMedium = document.getElementsByClassName("css-dcmtd5");
-    const isEasy = document.getElementsByClassName("css-14oi08n");
-
-    if (checkElem(isEasy)) {
-      difficulty = "Easy";
-    } else if (checkElem(isMedium)) {
-      difficulty = "Medium";
-    } else if (checkElem(isHard)) {
-      difficulty = "Hard";
-    }
-    // Final formatting of the contents of the README for each problem
-    const markdown = `<h2><a href="${questionUrl}">${qtitle}</a></h2><h3>${difficulty}</h3><hr>${qbody}`;
-    return markdown;
-  } else if (checkElem(questionDescriptionElem)) {
-    let questionTitle = document.getElementsByClassName("question-title");
-    if (checkElem(questionTitle)) {
-      questionTitle = questionTitle[0].innerText;
-    } else {
-      questionTitle = "unknown-problem";
-    }
-
-    const questionBody = questionDescriptionElem[0].innerHTML;
-    const markdown = `<h2>${questionTitle}</h2><hr>${questionBody}`;
-
-    return markdown;
-  }
-};
-/* Injects a spinner on left side to the "Run Code" button */
-LeetCodeV1.prototype.startSpinner = function () {
-  try {
-    elem = document.getElementById("leethub_progress_anchor_element");
-    if (!elem) {
-      elem = document.createElement("span");
-      elem.id = "leethub_progress_anchor_element";
-      elem.style = "margin-right: 20px;padding-top: 2px;";
-    }
-    elem.innerHTML = `<div id="${this.progressSpinnerElementId}" class="${this.progressSpinnerElementClass}"></div>`;
-    target = this.insertToAnchorElement(elem);
-    uploadState.uploading = true;
-  } catch (error) {
-    console.log(error);
-  }
-};
-/* Injects css style required for the upload progress indicator */
-LeetCodeV1.prototype.injectSpinnerStyle = function () {
-  const style = document.createElement("style");
-  style.textContent = `.${this.progressSpinnerElementClass} {pointer-events: none;width: 2.0em;height: 2.0em;border: 0.4em solid transparent;border-color: #eee;border-top-color: #3E67EC;border-radius: 50%;animation: loadingspin 1s linear infinite;} @keyframes loadingspin { 100% { transform: rotate(360deg) }}`;
-  document.head.append(style);
-};
-/* Inserts an anchor element that is specific to the page you are on (e.g. Explore) */
-LeetCodeV1.prototype.insertToAnchorElement = function (elem) {
-  if (document.URL.startsWith("https://leetcode.com/explore/")) {
-    action = document.getElementsByClassName("action");
-    if (
-      checkElem(action) &&
-      checkElem(action[0].getElementsByClassName("row")) &&
-      checkElem(
-        action[0]
-          .getElementsByClassName("row")[0]
-          .getElementsByClassName("col-sm-6")
-      ) &&
-      action[0]
-        .getElementsByClassName("row")[0]
-        .getElementsByClassName("col-sm-6").length > 1
-    ) {
-      target = action[0]
-        .getElementsByClassName("row")[0]
-        .getElementsByClassName("col-sm-6")[1];
-      elem.className = "pull-left";
-      if (target.childNodes.length > 0) target.childNodes[0].prepend(elem);
-    }
-  } else {
-    if (checkElem(document.getElementsByClassName("action__38Xc"))) {
-      target = document.getElementsByClassName("action__38Xc")[0];
-      elem.className = "runcode-wrapper__8rXm";
-      if (target.childNodes.length > 0) target.childNodes[0].prepend(elem);
-    }
-  }
-};
-/* Creates a ✔️ tick mark before "Run Code" button signaling LeetHub has done its job */
-LeetCodeV1.prototype.markUploaded = function () {
-  elem = document.getElementById(this.progressSpinnerElementId);
-  if (elem) {
-    elem.className = "";
-    style =
-      "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid #78b13f;border-right:7px solid #78b13f;";
-    elem.style = style;
-  }
-};
-/* Creates a ❌ failed tick mark before "Run Code" button signaling that upload failed */
-LeetCodeV1.prototype.markUploadFailed = function () {
-  elem = document.getElementById(this.progressSpinnerElementId);
-  if (elem) {
-    elem.className = "";
-    style =
-      "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid red;border-right:7px solid red;";
-    elem.style = style;
-  }
-};
-
 function LeetCodeV2() {
   this.submissionData;
-  this.progressSpinnerElementId = "leethub_progress_elem";
+  this.progressSpinnerElementId = PUSH_BTN_ID;
   this.progressSpinnerElementClass = "leethub_progress";
   this.injectSpinnerStyle();
 }
@@ -1058,14 +676,13 @@ LeetCodeV2.prototype.parseDifficulty = function () {
   return "unknown";
 };
 LeetCodeV2.prototype.startSpinner = function () {
-  let elem = document.getElementById("leethub_progress_anchor_element");
+  let elem = document.getElementById(PUSH_BTN_ID);
   if (!elem) {
     elem = document.createElement("span");
-    elem.id = "leethub_progress_anchor_element";
+    elem.id = PUSH_BTN_ID;
     elem.style = "margin-right: 20px;padding-top: 2px;";
   }
   elem.innerHTML = `<div id="${this.progressSpinnerElementId}" class="${this.progressSpinnerElementClass}"></div>`;
-  this.insertToAnchorElement(elem);
   uploadState.uploading = true;
 };
 LeetCodeV2.prototype.injectSpinnerStyle = function () {
@@ -1073,29 +690,17 @@ LeetCodeV2.prototype.injectSpinnerStyle = function () {
   style.textContent = `.${this.progressSpinnerElementClass} {pointer-events: none;width: 2.0em;height: 2.0em;border: 0.4em solid transparent;border-color: #eee;border-top-color: #3E67EC;border-radius: 50%;animation: loadingspin 1s linear infinite;} @keyframes loadingspin { 100% { transform: rotate(360deg) }}`;
   document.head.append(style);
 };
-LeetCodeV2.prototype.insertToAnchorElement = function (elem) {
-  if (document.URL.startsWith("https://leetcode.com/explore/")) {
-    // TODO: support spinner when answering problems on Explore pages
-    //   action = document.getElementsByClassName('action');
-    //   if (
-    //     checkElem(action) &&
-    //     checkElem(action[0].getElementsByClassName('row')) &&
-    //     checkElem(action[0].getElementsByClassName('row')[0].getElementsByClassName('col-sm-6')) &&
-    //     action[0].getElementsByClassName('row')[0].getElementsByClassName('col-sm-6').length > 1
-    //   ) {
-    //     target = action[0].getElementsByClassName('row')[0].getElementsByClassName('col-sm-6')[1];
-    //     elem.className = 'pull-left';
-    //     if (target.childNodes.length > 0) target.childNodes[0].prepend(elem);
-    //   }
-    return;
-  }
 
+LeetCodeV2.prototype.insertToAnchorElement = function (elem) {
+  // TODO: support spinner when answering problems on Explore pages
+  if (document.URL.startsWith("https://leetcode.com/explore/")) return;
   if (checkElem(document.getElementsByClassName("ml-auto"))) {
     const target = document.getElementsByClassName("ml-auto")[0];
     elem.className = "runcode-wrapper__8rXm";
     if (target.childNodes.length > 0) target.prepend(elem);
   }
 };
+
 LeetCodeV2.prototype.markUploaded = function () {
   let elem = document.getElementById(this.progressSpinnerElementId);
   if (elem) {
@@ -1230,7 +835,6 @@ const loader = (leetCode, suffix) => {
       }
 
       const problemName = leetCode.getProblemNameSlug();
-      const alreadyCompleted = await checkAlreadyCompleted(problemName);
       const language = leetCode.getLanguageExtension();
       if (!language) {
         throw new Error("Could not find language");
@@ -1293,10 +897,6 @@ const loader = (leetCode, suffix) => {
 
       uploadState.uploading = false;
       leetCode.markUploaded();
-
-      if (!alreadyCompleted) {
-        incrementStats();
-      }
     } catch (err) {
       uploadState.uploading = false;
       leetCode.markUploadFailed();
@@ -1306,25 +906,9 @@ const loader = (leetCode, suffix) => {
   }, 1000);
 };
 
-const isMacOS = window.navigator.userAgent.includes("Mac");
-
-// Submit by Keyboard Shortcuts only support on LeetCode v2
-function submitByShortcuts(event, leetCodeV2) {
-  const isEnterKey = event.key === "Enter";
-
-  // Adapt to MacOS operating system
-  if (
-    isEnterKey &&
-    ((isMacOS && event.metaKey) || (!isMacOS && event.ctrlKey))
-  ) {
-    loader(leetCodeV2);
-  }
-}
-
 // Use MutationObserver to determine when the submit button elements are loaded
 const observer = new MutationObserver(function (_mutations, observer) {
-  const v1SubmitBtn = document.querySelector('[data-cy="submit-code-btn"]');
-  const v2SubmitBtn = document.querySelector(
+  const submitBtn = document.querySelector(
     '[data-e2e-locator="console-submit-button"]'
   );
   const textareaList = document.getElementsByTagName("textarea");
@@ -1335,21 +919,12 @@ const observer = new MutationObserver(function (_mutations, observer) {
       ? textareaList[0]
       : textareaList[1];
 
-  if (v1SubmitBtn) {
+  if (submitBtn && textarea) {
     observer.disconnect();
-
-    const leetCode = new LeetCodeV1();
-    v1SubmitBtn.addEventListener("click", () => loader(leetCode));
-    return;
-  }
-
-  if (v2SubmitBtn && textarea) {
-    observer.disconnect();
-
     const leetCode = new LeetCodeV2();
-    v2SubmitBtn.addEventListener("click", () => loader(leetCode));
-    textarea.addEventListener("keydown", (e) => submitByShortcuts(e, leetCode));
+    submitBtn.addEventListener("click", () => loader(leetCode));
     leetCode.addManualSubmitButton();
+    leetCode.addUrlChangeListener();
   }
 });
 
@@ -1359,10 +934,3 @@ setTimeout(() => {
     subtree: true,
   });
 }, 2000);
-
-// add url change listener & manual submit button if it does not exist already
-setTimeout(() => {
-  const leetCode = new LeetCodeV2();
-  leetCode.addManualSubmitButton();
-  leetCode.addUrlChangeListener();
-}, 6000);
