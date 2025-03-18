@@ -41,9 +41,6 @@ const languages = {
 /* Commit messages */
 const readmeMsg = "Create README";
 
-// /* state of upload for progress */
-// let
-
 /* returns today's date in MM-DD-YYYY format */
 function getTodaysDate() {
   const today = new Date();
