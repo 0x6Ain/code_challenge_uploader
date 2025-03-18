@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
 };
 
 const PUSH_BTN_ID = "manualGitSubmit";
+
 /* Enum for languages supported by LeetCode. */
 const languages = {
   C: ".c",
@@ -39,18 +40,9 @@ const languages = {
 
 /* Commit messages */
 const readmeMsg = "Create README";
-const discussionMsg = "Prepend discussion post";
-const createNotesMsg = "Attach NOTES";
 
-// problem types
-const NORMAL_PROBLEM = 0;
-const EXPLORE_SECTION_PROBLEM = 1;
-
-/* Difficulty of most recenty submitted question */
-let difficulty = "";
-
-/* state of upload for progress */
-let uploadState = { uploading: false };
+// /* state of upload for progress */
+// let
 
 /* returns today's date in MM-DD-YYYY format */
 function getTodaysDate() {
@@ -263,7 +255,6 @@ const uploadGit = async (
         throw new Error(`Invalid action: ${action}`);
     }
   } catch (err) {
-    // 409 충돌 에러 처리
     if (err.message === "409") {
       const data = await getUpdatedData(token, hook, problemName, fileName);
       if (data) {
@@ -309,25 +300,6 @@ function checkElem(elem) {
   return elem && elem.length > 0;
 }
 
-function convertToSlug(string) {
-  const a =
-    "àáâäæãåāăąçćčđďèéêëēėęěğǵḧîïíīįìłḿñńǹňôöòóœøōõőṕŕřßśšşșťțûüùúūǘůűųẃẍÿýžźż·/_,:;";
-  const b =
-    "aaaaaaaaaacccddeeeeeeeegghiiiiiilmnnnnoooooooooprrsssssttuuuuuuuuuwxyyzzz------";
-  const p = new RegExp(a.split("").join("|"), "g");
-
-  return string
-    .toString()
-    .toLowerCase()
-    .replace(/\s+/g, "-") // Replace spaces with -
-    .replace(p, (c) => b.charAt(a.indexOf(c))) // Replace special characters
-    .replace(/&/g, "-and-") // Replace & with 'and'
-    .replace(/[^\w\-]+/g, "") // Remove all non-word characters
-    .replace(/\-\-+/g, "-") // Replace multiple - with single -
-    .replace(/^-+/, "") // Trim - from start of text
-    .replace(/-+$/, ""); // Trim - from end of text
-}
-
 function addLeadingZeros(title) {
   const maxTitlePrefixLength = 4;
   var len = title.split("-")[0].length;
@@ -338,7 +310,7 @@ function addLeadingZeros(title) {
 }
 
 function formatStats(time, timePercentile, space, spacePercentile) {
-  return `Time: ${time} (${timePercentile}%), Space: ${space} (${spacePercentile}%) - LeetHub`;
+  return `Time: ${time} (${timePercentile}%), Space: ${space} (${spacePercentile}%)`;
 }
 
 function getGitIcon() {
@@ -361,97 +333,10 @@ function getGitIcon() {
   return gitSvg;
 }
 
-function getToolTip() {
-  var toolTip = document.createElement("div");
-  toolTip.id = "toolTip";
-  toolTip.className = "hidden";
-
-  chrome.storage.local.get("dontShowToolTip").then(({ dontShowToolTip }) => {
-    if (dontShowToolTip) {
-      return toolTip;
-    } else {
-      toolTip.textContent =
-        "You may select from earlier submissions to push. \r\n\r\n You may maintain multiple versions by adding a suffix with a right-click.";
-      toolTip.className =
-        "fixed bg-sd-popover text-sd-popover-foreground rounded-sd-md z-modal text-xs text-left font-normal whitespace-pre-line shadow w-48 p-2 border-sd-border border cursor-default translate-y-20 transition-opacity opacity-0 duration-300 group-hover:opacity-100";
-      toolTip.appendChild(getDontShowContainer());
-      toolTip.addEventListener("click", (event) => event.stopPropagation());
-    }
-  });
-  return toolTip;
-}
-
-function getDontShowContainer() {
-  var dontShowContainer = document.createElement("div");
-  dontShowContainer.className = "flex item-center justify-center gap-1 mt-2";
-
-  var lable = document.createElement("label");
-  lable.htmlFor = "dontShowCheckBox";
-  lable.textContent = "dont show it again";
-
-  var checkBox = document.createElement("input");
-  checkBox.type = "checkbox";
-  checkBox.id = "dontShowCheckBox";
-  checkBox.addEventListener("click", function (event) {
-    event.stopPropagation();
-    if (this.checked) {
-      chrome.storage.local.set({ dontShowToolTip: true });
-      document.getElementById("toolTip").className = document
-        .getElementById("toolTip")
-        .className.replace("group-hover:opacity-100", "");
-    }
-  });
-
-  dontShowContainer.appendChild(checkBox);
-  dontShowContainer.appendChild(lable);
-  return dontShowContainer;
-}
-
-/* Discussion Link - When a user makes a new post, the link is prepended to the README for that problem.*/
-document.addEventListener("click", (event) => {
-  const element = event.target;
-  const oldPath = window.location.pathname;
-
-  /* Act on Post button click */
-  /* Complex since "New" button shares many of the same properties as "Post button */
-  if (
-    element.classList.contains("icon__3Su4") ||
-    (element.parentElement != null &&
-      (element.parentElement.classList.contains("icon__3Su4") ||
-        element.parentElement.classList.contains(
-          "btn-content-container__214G"
-        ) ||
-        element.parentElement.classList.contains("header-right__2UzF")))
-  ) {
-    setTimeout(function () {
-      /* Only post if post button was clicked and url changed */
-      if (
-        oldPath !== window.location.pathname &&
-        oldPath === window.location.pathname.substring(0, oldPath.length) &&
-        !Number.isNaN(window.location.pathname.charAt(oldPath.length))
-      ) {
-        const date = new Date();
-        const currentDate = `${date.getDate()}/${date.getMonth()}/${date.getFullYear()} at ${date.getHours()}:${date.getMinutes()}`;
-        const addition = `[Discussion Post (created on ${currentDate})](${window.location})  \n`;
-        const problemName = window.location.pathname.split("/")[2]; // must be true.
-
-        uploadGit(
-          addition,
-          problemName,
-          "README.md",
-          discussionMsg,
-          "update",
-          true
-        );
-      }
-    }, 1000);
-  }
-});
-
 function LeetCodeV2() {
   this.submissionData;
   this.progressSpinnerElementId = PUSH_BTN_ID;
-  this.progressSpinnerElementClass = "leethub_progress";
+  this.progressSpinnerElementClass = "progress";
   this.injectSpinnerStyle();
 }
 LeetCodeV2.prototype.init = async function () {
@@ -484,6 +369,7 @@ LeetCodeV2.prototype.init = async function () {
 
   this.submissionData = data;
 };
+
 LeetCodeV2.prototype.findAndUploadCode = function (
   problemName,
   fileName,
@@ -492,9 +378,7 @@ LeetCodeV2.prototype.findAndUploadCode = function (
   cb = undefined
 ) {
   const code = this.getCode();
-  if (!code) {
-    throw new Error("No solution code found");
-  }
+  if (!code) throw new Error("No solution code found");
 
   return uploadGit(
     btoa(unescape(encodeURIComponent(code))),
@@ -506,6 +390,7 @@ LeetCodeV2.prototype.findAndUploadCode = function (
     cb
   );
 };
+
 LeetCodeV2.prototype.getCode = function () {
   if (this.submissionData != null) {
     return this.submissionData.code;
@@ -535,7 +420,6 @@ LeetCodeV2.prototype.getLanguageExtension = function () {
 
   return languages[lang];
 };
-LeetCodeV2.prototype.getNotesIfAny = function () {};
 
 LeetCodeV2.prototype.extractQuestionNumber = function () {
   let qNum = this.submissionData.question.questionId; // Default to questionId
@@ -581,6 +465,7 @@ LeetCodeV2.prototype.getSuccessStateAndUpdate = function () {
   }
   return false;
 };
+
 LeetCodeV2.prototype.parseStats = function () {
   if (this.submissionData != null) {
     const runtimePercentile =
@@ -596,6 +481,7 @@ LeetCodeV2.prototype.parseStats = function () {
       timePercentile: runtimePercentile,
       space: this.submissionData.memoryDisplay,
       spacePercentile: spacePercentile,
+      difficulty: this.submissionData.difficulty,
     };
   }
 
@@ -615,6 +501,7 @@ LeetCodeV2.prototype.parseStats = function () {
 
   return formatStats(time, timePercentile, space, spacePercentile);
 };
+
 LeetCodeV2.prototype.parseQuestion = function () {
   let markdown;
   if (this.submissionData != null) {
@@ -635,23 +522,7 @@ LeetCodeV2.prototype.parseQuestion = function () {
 
   return markdown;
 };
-LeetCodeV2.prototype.parseQuestionTitle = function () {
-  if (this.submissionData != null) {
-    return this.submissionData.question.title;
-  }
 
-  let questionTitle = document
-    .getElementsByTagName("title")[0]
-    .innerText.split(" ")
-    .slice(0, -2)
-    .join(" ");
-
-  if (questionTitle === "") {
-    questionTitle = "unknown-problem";
-  }
-
-  return questionTitle;
-};
 LeetCodeV2.prototype.parseQuestionDescription = function () {
   if (this.submissionData != null) {
     return this.submissionData.question.content;
@@ -663,87 +534,56 @@ LeetCodeV2.prototype.parseQuestionDescription = function () {
   }
   return description[0].content;
 };
-LeetCodeV2.prototype.parseDifficulty = function () {
-  if (this.submissionData != null) {
-    return this.submissionData.question.difficulty;
-  }
 
-  const diffElement = document.getElementsByClassName("mt-3 flex space-x-4");
-  if (checkElem(diffElement)) {
-    return diffElement[0].children[0].innerText;
-  }
-  // Else, we're not on the description page. Nothing we can do.
-  return "unknown";
-};
 LeetCodeV2.prototype.startSpinner = function () {
-  let elem = document.getElementById(PUSH_BTN_ID);
+  let elem = document.getElementById(this.progressSpinnerElementId);
   if (!elem) {
     elem = document.createElement("span");
-    elem.id = PUSH_BTN_ID;
+    elem.id = this.progressSpinnerElementId;
     elem.style = "margin-right: 20px;padding-top: 2px;";
   }
   elem.innerHTML = `<div id="${this.progressSpinnerElementId}" class="${this.progressSpinnerElementClass}"></div>`;
-  uploadState.uploading = true;
 };
+
 LeetCodeV2.prototype.injectSpinnerStyle = function () {
   const style = document.createElement("style");
   style.textContent = `.${this.progressSpinnerElementClass} {pointer-events: none;width: 2.0em;height: 2.0em;border: 0.4em solid transparent;border-color: #eee;border-top-color: #3E67EC;border-radius: 50%;animation: loadingspin 1s linear infinite;} @keyframes loadingspin { 100% { transform: rotate(360deg) }}`;
   document.head.append(style);
 };
 
-LeetCodeV2.prototype.insertToAnchorElement = function (elem) {
-  // TODO: support spinner when answering problems on Explore pages
-  if (document.URL.startsWith("https://leetcode.com/explore/")) return;
-  if (checkElem(document.getElementsByClassName("ml-auto"))) {
-    const target = document.getElementsByClassName("ml-auto")[0];
-    elem.className = "runcode-wrapper__8rXm";
-    if (target.childNodes.length > 0) target.prepend(elem);
-  }
-};
-
 LeetCodeV2.prototype.markUploaded = function () {
-  let elem = document.getElementById(this.progressSpinnerElementId);
+  const elem = document.getElementById(this.progressSpinnerElementId);
   if (elem) {
     elem.className = "";
     style =
       "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid #78b13f;border-right:7px solid #78b13f;";
     elem.style = style;
+    elem.innerHTML = "";
   }
 };
 LeetCodeV2.prototype.markUploadFailed = function () {
-  let elem = document.getElementById(this.progressSpinnerElementId);
+  const elem = document.getElementById(this.progressSpinnerElementId);
   if (elem) {
     elem.className = "";
     style =
       "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid red;border-right:7px solid red;";
     elem.style = style;
+    elem.innerHTML = "";
   }
 };
 
 LeetCodeV2.prototype.addManualSubmitButton = function () {
-  let elem = document.getElementById("manualGitSubmit");
+  let elem = document.getElementById(PUSH_BTN_ID);
   const domain = document.URL.match(/:\/\/(www\.)?(.[^/:]+)/)[2].split(".")[0];
-  if (elem || domain != "leetcode") {
-    return;
-  }
+  if (elem || domain != "leetcode") return;
 
   var submitButton = document.createElement("button");
-  submitButton.id = "manualGitSubmit";
+  submitButton.id = PUSH_BTN_ID;
   submitButton.className =
     "relative inline-flex gap-2 items-center justify-center font-medium cursor-pointer focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-colors bg-transparent enabled:hover:bg-fill-secondary enabled:active:bg-fill-primary text-caption rounded text-text-primary group ml-auto p-1";
   submitButton.textContent = "Push ";
   submitButton.appendChild(getGitIcon());
-  submitButton.appendChild(getToolTip());
   submitButton.addEventListener("click", () => loader(this));
-  submitButton.addEventListener("contextmenu", (event) => {
-    event.preventDefault();
-    const suffix = prompt(
-      'Add a suffix for this solution file, i.e., -bfs, -dfs. \r\nWe don\'recommend includes special character except for "-".'
-    );
-    if (isValidSuffix(suffix)) {
-      loader(this, suffix);
-    }
-  });
 
   let notesIcon = document.querySelectorAll(".ml-auto svg.fa-bookmark");
   if (checkElem(notesIcon)) {
@@ -751,14 +591,6 @@ LeetCodeV2.prototype.addManualSubmitButton = function () {
     target.prepend(submitButton);
   }
 };
-
-/* Validate if string can be added as suffix. Can add more constrains if necessary. */
-function isValidSuffix(string) {
-  if (!string || string.length > 255) {
-    return false;
-  }
-  return true;
-}
 
 LeetCodeV2.prototype.addUrlChangeListener = function () {
   window.navigation.addEventListener("navigate", (event) => {
@@ -859,20 +691,6 @@ const loader = (leetCode, suffix) => {
           }
         });
 
-      /* Upload Notes if any*/
-      notes = leetCode.getNotesIfAny();
-      let updateNotes;
-      if (notes != undefined && notes.length > 0) {
-        updateNotes = uploadGit(
-          btoa(unescape(encodeURIComponent(notes))),
-          problemName,
-          "NOTES.md",
-          createNotesMsg,
-          "upload",
-          false
-        );
-      }
-
       const problemContext = {
         time: `${probStats.time} (${probStats.timePercentile}%)`,
         space: `${probStats.space} (${probStats.spacePercentile}%)`,
@@ -881,9 +699,15 @@ const loader = (leetCode, suffix) => {
         difficulty: difficulty,
         date: getTodaysDate(),
       };
-      const probStatsCommitMsg = `Time: ${probStats.time} (${probStats.timePercentile}%), Space: ${probStats.space} (${probStats.spacePercentile}%) - LeetHub`; // default commit
+
       const commitMsg =
-        (await getCustomCommitMessage(problemContext)) || probStatsCommitMsg;
+        (await getCustomCommitMessage(problemContext)) ||
+        formatStats(
+          probStats.time,
+          probStats.timePercentile,
+          probStats.space,
+          probStats.spacePercentile
+        );
 
       /* Upload code to Git */
       const updateCode = leetCode.findAndUploadCode(
@@ -893,12 +717,10 @@ const loader = (leetCode, suffix) => {
         "upload"
       );
 
-      await Promise.all([updateReadMe, updateNotes, updateCode]);
+      await Promise.all([updateReadMe, updateCode]);
 
-      uploadState.uploading = false;
       leetCode.markUploaded();
     } catch (err) {
-      uploadState.uploading = false;
       leetCode.markUploadFailed();
       clearInterval(intervalId);
       console.error(err);
