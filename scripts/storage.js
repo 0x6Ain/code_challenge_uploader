@@ -5,18 +5,12 @@ const STORAGE_KEYS = {
   USERNAME: "code_challenge_uploader_username",
   PIPE: "pipe_challenge_uploader_username",
   STATS: "stats",
+  ORGANIZE_OPTION: "organize_option",
 };
 
 /* Sync to local storage */
 chrome.storage.local.get("isSync", (data) => {
-  keys = [
-    STORAGE_KEYS.TOKEN,
-    STORAGE_KEYS.USERNAME,
-    STORAGE_KEYS.PIPE,
-    STORAGE_KEYS.STATS,
-    STORAGE_KEYS.HOOK,
-    STORAGE_KEYS.MODE,
-  ];
+  keys = [STORAGE_KEYS.TOKEN, STORAGE_KEYS.USERNAME, STORAGE_KEYS.PIPE, STORAGE_KEYS.STATS, STORAGE_KEYS.HOOK, STORAGE_KEYS.MODE];
   if (!data || !data.isSync) {
     keys.forEach((key) => {
       chrome.storage.sync.get(key, (data) => {
@@ -30,6 +24,7 @@ chrome.storage.local.get("isSync", (data) => {
     console.log("Local storage already synced!");
   }
 });
+getOrgOption().then((v) => console.log(v));
 
 /* stats 초기값이 없는 경우, 기본값을 생성하고 stats를 업데이트한다.
    만약 새로운 버전이 업데이트되었을 경우, 기존 submission은 업데이트를 위해 초기화 한다.
@@ -38,12 +33,9 @@ chrome.storage.local.get("isSync", (data) => {
 getStats().then((stats) => {
   if (isNull(stats)) stats = {};
   if (isNull(stats.version)) stats.version = "0.0.0";
-  if (isNull(stats.branches) || stats.version !== getVersion())
-    stats.branches = {};
-  if (isNull(stats.submission) || stats.version !== getVersion())
-    stats.submission = {};
-  if (isNull(stats.problems) || stats.version !== getVersion())
-    stats.problems = {};
+  if (isNull(stats.branches) || stats.version !== getVersion()) stats.branches = {};
+  if (isNull(stats.submission) || stats.version !== getVersion()) stats.submission = {};
+  if (isNull(stats.problems) || stats.version !== getVersion()) stats.problems = {};
   saveStats(stats);
 });
 
@@ -166,12 +158,10 @@ async function getHook() {
 /** welcome.html 의 분기 처리 dis_option에서 설정된 boolean 값을 반환합니다. */
 async function getOrgOption() {
   try {
-    return await getObjectFromLocalStorage("BaekjoonHub_OrgOption");
+    return await getObjectFromLocalStorage(STORAGE_KEYS.ORGANIZE_OPTION);
   } catch (ex) {
-    console.log(
-      "The way it works has changed with updates. Update your storage. "
-    );
-    chrome.storage.local.set({ BaekjoonHub_OrgOption: "platform" }, () => {});
+    log("The way it works has changed with updates. Update your storage. ");
+    saveObjectInSyncStorage({ [STORAGE_KEYS.ORGANIZE]: "platform" });
     return "platform";
   }
 }
@@ -206,11 +196,7 @@ async function updateStatsSHAfromPath(path, sha) {
 function updateObjectDatafromPath(obj, path, data) {
   let current = obj;
   // split path into array and filter out empty strings
-  const pathArray = _swexpertacademyRankRemoveFilter(
-    _baekjoonSpaceRemoverFilter(
-      _programmersRankRemoverFilter(_baekjoonRankRemoverFilter(path))
-    )
-  )
+  const pathArray = _swexpertacademyRankRemoveFilter(_baekjoonSpaceRemoverFilter(_programmersRankRemoverFilter(_baekjoonRankRemoverFilter(path))))
     .split("/")
     .filter((p) => p !== "");
   for (const path of pathArray.slice(0, -1)) {
@@ -234,11 +220,7 @@ async function getStatsSHAfromPath(path) {
 
 function getObjectDatafromPath(obj, path) {
   let current = obj;
-  const pathArray = _swexpertacademyRankRemoveFilter(
-    _baekjoonSpaceRemoverFilter(
-      _programmersRankRemoverFilter(_baekjoonRankRemoverFilter(path))
-    )
-  )
+  const pathArray = _swexpertacademyRankRemoveFilter(_baekjoonSpaceRemoverFilter(_programmersRankRemoverFilter(_baekjoonRankRemoverFilter(path))))
     .split("/")
     .filter((p) => p !== "");
   for (const path of pathArray.slice(0, -1)) {
@@ -283,6 +265,7 @@ async function updateLocalStorageStats() {
  * @param {string} language - 'BaekjoonHub_disOption'이 True일 경우에 분리에 사용될 언어 입니다.
  * */
 async function getDirNameByOrgOption(dirName, language) {
+  const str = await getOrgOption();
   if ((await getOrgOption()) === "language") dirName = `${language}/${dirName}`;
   return dirName;
 }
@@ -296,10 +279,7 @@ async function getDirNameByOrgOption(dirName, language) {
  * @returns {string} - 레벨과 관련된 경로를 제거한 문자열
  */
 function _baekjoonRankRemoverFilter(path) {
-  return path.replace(
-    /\/(Unrated|Silver|Bronze|Gold|Platinum|Diamond|Ruby|Master)\//g,
-    "/"
-  );
+  return path.replace(/\/(Unrated|Silver|Bronze|Gold|Platinum|Diamond|Ruby|Master)\//g, "/");
 }
 
 /**

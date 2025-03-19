@@ -41,19 +41,6 @@ const languages = {
 /* Commit messages */
 const readmeMsg = "Create README";
 
-/* returns today's date in MM-DD-YYYY format */
-function getTodaysDate() {
-  const today = new Date();
-  const month = today.getMonth() + 1; // fix months are zero-indexed
-  const day = today.getDate();
-  const year = today.getFullYear();
-
-  const formattedMonth = month < 10 ? "0" + month : month;
-  const formattedDay = day < 10 ? "0" + day : day;
-
-  return `${formattedMonth}-${formattedDay}-${year}`;
-}
-
 const parseCustomCommitMessage = (text, problemContext) => {
   return text.replace(/{(\w+)}/g, (match, key) => {
     // check if the variable exists in the problemContext and replace the matching text
@@ -67,16 +54,10 @@ const getCustomCommitMessage = (problemContext) => {
     chrome.storage.local.get("custom_commit_message", (result) => {
       if (chrome.runtime.lastError) {
         reject(chrome.runtime.lastError);
-      } else if (
-        !result.custom_commit_message ||
-        !result.custom_commit_message.trim()
-      ) {
+      } else if (!result.custom_commit_message || !result.custom_commit_message.trim()) {
         resolve(null); // no custom message is set
       } else {
-        const finalCommitMessage = parseCustomCommitMessage(
-          result.custom_commit_message,
-          problemContext
-        );
+        const finalCommitMessage = parseCustomCommitMessage(result.custom_commit_message, problemContext);
         resolve(finalCommitMessage);
       }
     });
@@ -84,16 +65,7 @@ const getCustomCommitMessage = (problemContext) => {
 };
 
 /* Main function for uploading code to GitHub repo, and callback cb is called if success */
-const upload = async (
-  token,
-  hook,
-  code,
-  problem,
-  filename,
-  sha,
-  commitMsg,
-  cb = undefined
-) => {
+const upload = async (token, hook, code, problem, filename, sha, commitMsg, cb = undefined) => {
   /* Define Payload */
   let data = {
     message: commitMsg,
@@ -149,16 +121,7 @@ const getAndInitializeStats = async (problem) => {
 /* Read from existing file on GitHub */
 /* Discussion posts prepended at top of README */
 /* Future implementations may require appending to bottom of file */
-const update = (
-  token,
-  hook,
-  addition,
-  directory,
-  filename,
-  commitMsg,
-  shouldPreprendDiscussionPosts,
-  cb = undefined
-) => {
+const update = (token, hook, addition, directory, filename, commitMsg, shouldPreprendDiscussionPosts, cb = undefined) => {
   let responseSHA;
   return getUpdatedData(token, hook, directory, filename)
     .then((data) => {
@@ -176,78 +139,32 @@ const update = (
           btoa(unescape(encodeURIComponent(addition + existingContent)))
         : btoa(unescape(encodeURIComponent(existingContent)))
     )
-    .then((newContent) =>
-      upload(
-        token,
-        hook,
-        newContent,
-        directory,
-        filename,
-        responseSHA,
-        commitMsg,
-        cb
-      )
-    );
+    .then((newContent) => upload(token, hook, newContent, directory, filename, responseSHA, commitMsg, cb));
 };
 
-const uploadGit = async (
-  code,
-  problemName,
-  fileName,
-  commitMsg,
-  action,
-  shouldPrependDiscussionPosts = false,
-  cb = undefined,
-  _diff = undefined
-) => {
+const uploadGit = async (code, problemName, fileName, commitMsg, action, shouldPrependDiscussionPosts = false, cb = undefined, _diff = undefined) => {
   // Assign difficulty
   if (_diff) difficulty = _diff.trim();
 
-  const { [STORAGE_KEYS.TOKEN]: token } = await chrome.storage.local.get(
-    STORAGE_KEYS.TOKEN
-  );
+  const { [STORAGE_KEYS.TOKEN]: token } = await chrome.storage.local.get(STORAGE_KEYS.TOKEN);
   if (!token) throw new Error("token is undefined");
 
-  const { [STORAGE_KEYS.MODE]: mode_type } = await chrome.storage.local.get(
-    STORAGE_KEYS.MODE
-  );
+  const { [STORAGE_KEYS.MODE]: mode_type } = await chrome.storage.local.get(STORAGE_KEYS.MODE);
   if (mode_type !== "commit") throw new Error("mode is not commit");
 
   // hook 가져오기
-  const { [STORAGE_KEYS.HOOK]: hook } = await chrome.storage.local.get(
-    STORAGE_KEYS.HOOK
-  );
+  const { [STORAGE_KEYS.HOOK]: hook } = await chrome.storage.local.get(STORAGE_KEYS.HOOK);
   if (!hook) throw new Error("hook not defined");
 
-  const { [STORAGE_KEYS.STATS]: stats } = await chrome.storage.local.get(
-    STORAGE_KEYS.STATS
-  );
+  const { [STORAGE_KEYS.STATS]: stats } = await chrome.storage.local.get(STORAGE_KEYS.STATS);
   try {
     switch (action) {
       case "upload":
         // SHA 가져오기 (있는 경우)
         const sha = stats?.shas?.[problemName]?.[fileName] || "";
-        return await upload(
-          token,
-          hook,
-          code,
-          problemName,
-          fileName,
-          sha,
-          commitMsg,
-          cb
-        );
+        return await upload(token, hook, code, problemName, fileName, sha, commitMsg, cb);
       case "update":
-        return await update(
-          token,
-          hook,
-          code,
-          problemName,
-          fileName,
-          commitMsg,
-          shouldPrependDiscussionPosts,
-          cb
-        );
+        return await update(token, hook, code, problemName, fileName, commitMsg, shouldPrependDiscussionPosts, cb);
       default:
         throw new Error(`Invalid action: ${action}`);
     }
@@ -255,16 +172,7 @@ const uploadGit = async (
     if (err.message === "409") {
       const data = await getUpdatedData(token, hook, problemName, fileName);
       if (data) {
-        return await upload(
-          token,
-          hook,
-          code,
-          problemName,
-          fileName,
-          data.sha,
-          commitMsg,
-          cb
-        );
+        return await upload(token, hook, code, problemName, fileName, data.sha, commitMsg, cb);
       }
     }
     throw err;
@@ -367,25 +275,11 @@ LeetCodeV2.prototype.init = async function () {
   this.submissionData = data;
 };
 
-LeetCodeV2.prototype.findAndUploadCode = function (
-  problemName,
-  fileName,
-  commitMsg,
-  action,
-  cb = undefined
-) {
+LeetCodeV2.prototype.findAndUploadCode = function (problemName, fileName, commitMsg, action, cb = undefined) {
   const code = this.getCode();
   if (!code) throw new Error("No solution code found");
 
-  return uploadGit(
-    btoa(unescape(encodeURIComponent(code))),
-    problemName,
-    fileName,
-    commitMsg,
-    action,
-    false,
-    cb
-  );
+  return uploadGit(btoa(unescape(encodeURIComponent(code))), problemName, fileName, commitMsg, action, false, cb);
 };
 
 LeetCodeV2.prototype.getCode = function () {
@@ -423,8 +317,7 @@ LeetCodeV2.prototype.extractQuestionNumber = function () {
 
   const content = document.getElementById("qd-content");
   if (content) {
-    const elementSelector =
-      'a[href^="/problems/' + window.location.pathname.split("/")[2] + '/"]';
+    const elementSelector = 'a[href^="/problems/' + window.location.pathname.split("/")[2] + '/"]';
     const titleElement = content.querySelector(elementSelector);
 
     if (titleElement) {
@@ -452,9 +345,7 @@ LeetCodeV2.prototype.getProblemNameSlug = function () {
 };
 
 LeetCodeV2.prototype.getSuccessStateAndUpdate = function () {
-  const successTag = document.querySelectorAll(
-    '[data-e2e-locator="submission-result"]'
-  );
+  const successTag = document.querySelectorAll('[data-e2e-locator="submission-result"]');
   if (checkElem(successTag)) {
     console.log(successTag[0]);
     successTag[0].classList.add("marked_as_success");
@@ -465,14 +356,8 @@ LeetCodeV2.prototype.getSuccessStateAndUpdate = function () {
 
 LeetCodeV2.prototype.parseStats = function () {
   if (this.submissionData != null) {
-    const runtimePercentile =
-      Math.round(
-        (this.submissionData.runtimePercentile + Number.EPSILON) * 100
-      ) / 100;
-    const spacePercentile =
-      Math.round(
-        (this.submissionData.memoryPercentile + Number.EPSILON) * 100
-      ) / 100;
+    const runtimePercentile = Math.round((this.submissionData.runtimePercentile + Number.EPSILON) * 100) / 100;
+    const spacePercentile = Math.round((this.submissionData.memoryPercentile + Number.EPSILON) * 100) / 100;
     return {
       time: this.submissionData.runtimeDisplay,
       timePercentile: runtimePercentile,
@@ -484,9 +369,7 @@ LeetCodeV2.prototype.parseStats = function () {
 
   // Doesn't work unless we wait for page to finish loading.
   setTimeout(() => {}, 1000);
-  const probStats = document
-    .getElementsByClassName("flex w-full pb-4")[0]
-    .innerText.split("\n");
+  const probStats = document.getElementsByClassName("flex w-full pb-4")[0].innerText.split("\n");
   if (!checkElem(probStats)) {
     return null;
   }
@@ -503,9 +386,7 @@ LeetCodeV2.prototype.parseQuestion = function () {
   let markdown;
   if (this.submissionData != null) {
     const questionUrl = window.location.href.split("/submissions")[0];
-    const qTitle = `${this.extractQuestionNumber()}. ${
-      this.submissionData.question.title
-    }`;
+    const qTitle = `${this.extractQuestionNumber()}. ${this.submissionData.question.title}`;
     const qBody = this.parseQuestionDescription();
 
     difficulty = this.submissionData.question.difficulty;
@@ -552,8 +433,7 @@ LeetCodeV2.prototype.markUploaded = function () {
   const elem = document.getElementById(this.progressSpinnerElementId);
   if (elem) {
     elem.className = "";
-    style =
-      "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid #78b13f;border-right:7px solid #78b13f;";
+    style = "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid #78b13f;border-right:7px solid #78b13f;";
     elem.style = style;
     elem.innerHTML = "";
   }
@@ -562,8 +442,7 @@ LeetCodeV2.prototype.markUploadFailed = function () {
   const elem = document.getElementById(this.progressSpinnerElementId);
   if (elem) {
     elem.className = "";
-    style =
-      "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid red;border-right:7px solid red;";
+    style = "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid red;border-right:7px solid red;";
     elem.style = style;
     elem.innerHTML = "";
   }
@@ -591,16 +470,9 @@ LeetCodeV2.prototype.addManualSubmitButton = function () {
 
 LeetCodeV2.prototype.addUrlChangeListener = function () {
   window.navigation.addEventListener("navigate", (event) => {
-    const problem = window.location.href.match(
-      /leetcode.com\/problems\/(.*)\/submissions/
-    );
+    const problem = window.location.href.match(/leetcode.com\/problems\/(.*)\/submissions/);
     const submissionId = window.location.href.match(/\/(\d+)(\/|\?|$)/);
-    if (
-      problem &&
-      problem.length > 1 &&
-      submissionId &&
-      submissionId.length > 1
-    ) {
+    if (problem && problem.length > 1 && submissionId && submissionId.length > 1) {
       chrome.storage.local.set({ [problem[1]]: submissionId[1] });
     }
   });
@@ -608,15 +480,7 @@ LeetCodeV2.prototype.addUrlChangeListener = function () {
 
 /* Sync to local storage */
 chrome.storage.local.get("isSync", (data) => {
-  keys = [
-    "leethub_token",
-    "leethub_username",
-    "pipe_leethub",
-    "stats",
-    "leethub_hook",
-    "mode_type",
-    "custom_commit_message",
-  ];
+  keys = ["leethub_token", "leethub_username", "pipe_leethub", "stats", "leethub_hook", "mode_type", "custom_commit_message"];
   if (!data || !data.isSync) {
     keys.forEach((key) => {
       chrome.storage.sync.get(key, (data) => {
@@ -670,23 +534,13 @@ const loader = (leetCode, suffix) => {
       }
 
       /* Upload README */
-      const updateReadMe = await chrome.storage.local
-        .get("stats")
-        .then(({ stats }) => {
-          const shaExists =
-            stats?.shas?.[problemName]?.["README.md"] !== undefined;
+      const updateReadMe = await chrome.storage.local.get("stats").then(({ stats }) => {
+        const shaExists = stats?.shas?.[problemName]?.["README.md"] !== undefined;
 
-          if (!shaExists) {
-            return uploadGit(
-              btoa(unescape(encodeURIComponent(probStatement))),
-              problemName,
-              "README.md",
-              readmeMsg,
-              "upload",
-              false
-            );
-          }
-        });
+        if (!shaExists) {
+          return uploadGit(btoa(unescape(encodeURIComponent(probStatement))), problemName, "README.md", readmeMsg, "upload", false);
+        }
+      });
 
       const problemContext = {
         time: `${probStats.time} (${probStats.timePercentile}%)`,
@@ -694,25 +548,14 @@ const loader = (leetCode, suffix) => {
         language: language,
         problemName: problemName,
         difficulty: difficulty,
-        date: getTodaysDate(),
+        date: getDateString(),
       };
 
       const commitMsg =
-        (await getCustomCommitMessage(problemContext)) ||
-        formatStats(
-          probStats.time,
-          probStats.timePercentile,
-          probStats.space,
-          probStats.spacePercentile
-        );
+        (await getCustomCommitMessage(problemContext)) || formatStats(probStats.time, probStats.timePercentile, probStats.space, probStats.spacePercentile);
 
       /* Upload code to Git */
-      const updateCode = leetCode.findAndUploadCode(
-        problemName,
-        suffix ? problemName + suffix + language : problemName + language,
-        commitMsg,
-        "upload"
-      );
+      const updateCode = leetCode.findAndUploadCode(problemName, suffix ? problemName + suffix + language : problemName + language, commitMsg, "upload");
 
       await Promise.all([updateReadMe, updateCode]);
 
@@ -727,16 +570,9 @@ const loader = (leetCode, suffix) => {
 
 // Use MutationObserver to determine when the submit button elements are loaded
 const observer = new MutationObserver(function (_mutations, observer) {
-  const submitBtn = document.querySelector(
-    '[data-e2e-locator="console-submit-button"]'
-  );
+  const submitBtn = document.querySelector('[data-e2e-locator="console-submit-button"]');
   const textareaList = document.getElementsByTagName("textarea");
-  const textarea =
-    textareaList.length === 4
-      ? textareaList[2]
-      : textareaList.length === 2
-      ? textareaList[0]
-      : textareaList[1];
+  const textarea = textareaList.length === 4 ? textareaList[2] : textareaList.length === 2 ? textareaList[0] : textareaList[1];
 
   if (submitBtn && textarea) {
     observer.disconnect();
