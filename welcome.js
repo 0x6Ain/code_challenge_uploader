@@ -6,16 +6,11 @@ const ERROR_MESSAGES = {
     "Improper Authorization error - Grant code_challenge_uploader access to your GitHub account to continue (click code_challenge_uploader extension on the top right to proceed)",
 
   // Create
-  CREATE_304: (name) =>
-    `Error creating ${name} - Unable to modify repository. Try again later!`,
-  CREATE_400: (name) =>
-    `Error creating ${name} - Bad POST request, make sure you're not overriding any existing scripts`,
-  CREATE_401: (name) =>
-    `Error creating ${name} - Unauthorized access to repo. Try again later!`,
-  CREATE_403: (name) =>
-    `Error creating ${name} - Forbidden access to repository. Try again later!`,
-  CREATE_422: (name) =>
-    `Error creating ${name} - Unprocessable Entity. Repository may have already been created. Try Linking instead (select 2nd option).`,
+  CREATE_304: (name) => `Error creating ${name} - Unable to modify repository. Try again later!`,
+  CREATE_400: (name) => `Error creating ${name} - Bad POST request, make sure you're not overriding any existing scripts`,
+  CREATE_401: (name) => `Error creating ${name} - Unauthorized access to repo. Try again later!`,
+  CREATE_403: (name) => `Error creating ${name} - Forbidden access to repository. Try again later!`,
+  CREATE_422: (name) => `Error creating ${name} - Unprocessable Entity. Repository may have already been created. Try Linking instead (select 2nd option).`,
 
   // Hook
   LINK_301: (name) =>
@@ -35,11 +30,7 @@ const UI = {
 
   showSuccess: (url, name) => {
     $("#error").hide();
-    $("#success")
-      .html(
-        `Successfully created <a target="blank" href="${url}">${name}</a>. Start now!`
-      )
-      .show();
+    $("#success").html(`Successfully created <a target="blank" href="${url}">${name}</a>. Start now!`).show();
     $("#unlink").show();
   },
 
@@ -80,10 +71,7 @@ const statusCode = (res, status, name) => {
         UI.showCommitMode();
       });
       /* Set Repo Hook */
-      chrome.storage.local.set(
-        { code_challenge_uploader_hook: res.full_name },
-        () => console.log("Successfully set new repo hook")
-      );
+      chrome.storage.local.set({ code_challenge_uploader_hook: res.full_name }, () => console.log("Successfully set new repo hook"));
       break;
   }
 };
@@ -94,8 +82,7 @@ const createRepo = (token, name) => {
     name,
     private: true,
     auto_init: true,
-    description:
-      "This is an auto push repository for code challenge created with code challenge uploader[https://github.com/0x6Ain/code_challenge_uploader]",
+    description: "This is an auto push repository for code challenge created with code challenge uploader[https://github.com/0x6Ain/code_challenge_uploader]",
   };
   data = JSON.stringify(data);
 
@@ -176,21 +163,13 @@ function loadRepositories() {
             fetchRepos(); // Recursively fetch the next page
           } else {
             // All repos have been fetched, populate the dropdown
-            $("#existing_repo")
-              .empty()
-              .append('<option value="">Select a Repository</option>');
-            repos.forEach((repo) => {
-              $("#existing_repo").append(
-                `<option value="${repo.name}">${repo.name}</option>`
-              );
-            });
+            $("#existing_repo").empty().append('<option value="">Select a Repository</option>');
+            repos.forEach((repo) => $("#existing_repo").append(`<option value="${repo.name}">${repo.name}</option>`));
           }
         },
         error: function (xhr, status, error) {
           console.error("Failed to load repositories:", error);
-          $("#error")
-            .text("Failed to load repositories. Please try again.")
-            .show();
+          $("#error").text("Failed to load repositories. Please try again.").show();
         },
       });
     }
@@ -213,7 +192,6 @@ const linkRepo = (token, name) => {
     if (xhr.readyState === 4) {
       const res = JSON.parse(xhr.responseText);
       const bool = linkStatusCode(xhr.status, name);
-      console.log("🚀 ~ file: welcome.js:153 ~ bool:", bool);
       if (xhr.status === 200) {
         // BUG FIX
         if (!bool) {
@@ -223,21 +201,15 @@ const linkRepo = (token, name) => {
             console.log(`Error linking ${name} to code_challenge_uploader`);
           });
           /* Set Repo Hook to NONE */
-          chrome.storage.local.set(
-            { code_challenge_uploader_hook: null },
-            () => {
-              console.log("Defaulted repo hook to NONE");
-            }
-          );
+          chrome.storage.local.set({ code_challenge_uploader_hook: null }, () => {
+            console.log("Defaulted repo hook to NONE");
+          });
 
           UI.showHookMode();
         } else {
           /* Change mode type to commit */
           /* Save repo url to chrome storage */
-          chrome.storage.local.set(
-            { mode_type: "commit", repo: res.html_url },
-            () => UI.showSuccess(res.html_url, name)
-          );
+          chrome.storage.local.set({ mode_type: "commit", repo: res.html_url }, () => UI.showSuccess(res.html_url, name));
           /* Set Repo Hook */
           chrome.storage.local
             .set({ code_challenge_uploader_hook: res.full_name })
@@ -248,12 +220,6 @@ const linkRepo = (token, name) => {
             .then((psolved) => {
               /* Get problems solved count */
               const { stats } = psolved;
-              if (stats && stats.solved) {
-                $("#p_solved").text(stats.solved);
-                $("#p_solved_easy").text(stats.easy);
-                $("#p_solved_medium").text(stats.medium);
-                $("#p_solved_hard").text(stats.hard);
-              }
             });
 
           UI.showCommitMode();
@@ -295,14 +261,10 @@ $("#type").on("change", function () {
 $("#hook_button").on("click", () => {
   /* on click should generate: 1) option 2) repository name */
   if (!option()) {
-    $("#error").text(
-      "No option selected - Pick an option from dropdown menu below that best suits you!"
-    );
+    $("#error").text("No option selected - Pick an option from dropdown menu below that best suits you!");
     $("#error").show();
   } else if (!repositoryName()) {
-    $("#error").text(
-      "No repository name added - Enter the name of your repository!"
-    );
+    $("#error").text("No repository name added - Enter the name of your repository!");
     $("#name").focus();
     $("#error").show();
   } else {
@@ -319,10 +281,7 @@ $("#hook_button").on("click", () => {
     */
     chrome.storage.local.get(
       [STORAGE_KEYS.TOKEN, STORAGE_KEYS.USERNAME],
-      ({
-        code_challenge_uploader_token: token,
-        code_challenge_uploader_username: username,
-      }) => {
+      ({ code_challenge_uploader_token: token, code_challenge_uploader_username: username }) => {
         if (!token) {
           UI.showError(ERROR_MESSAGES.NO_TOKEN);
           return;
@@ -341,25 +300,22 @@ $("#hook_button").on("click", () => {
         linkRepo(token, `${username}/${repositoryName()}`, false);
       }
     );
+    /*프로그래밍 언어별 폴더 정리 옵션 세션 저장*/
+    let org_option = $("#org_option").val();
+    chrome.storage.local.set({ [STORAGE_KEYS.ORGANIZE_OPTION]: org_option }, () => console.log(`Set Organize by ${org_option}`));
   }
 });
 
 $("#unlink a").on("click", () => {
   unlinkRepo();
   $("#unlink").hide();
-  $("#success").text(
-    "Successfully unlinked your current git repo. Please create/link a new hook."
-  );
+  $("#success").text("Successfully unlinked your current git repo. Please create/link a new hook.");
 });
 
 /* Detect mode type */
 chrome.storage.local.get(
   [STORAGE_KEYS.MODE, STORAGE_KEYS.TOKEN, STORAGE_KEYS.HOOK],
-  ({
-    mode_type: mode,
-    code_challenge_uploader_token: token,
-    code_challenge_uploader_hook: hook,
-  }) => {
+  ({ mode_type: mode, code_challenge_uploader_token: token, code_challenge_uploader_hook: hook }) => {
     if (mode !== "commit") {
       UI.showHookMode();
       return;

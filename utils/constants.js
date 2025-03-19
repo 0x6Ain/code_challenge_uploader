@@ -5,6 +5,7 @@ const STORAGE_KEYS = {
   USERNAME: "code_challenge_uploader_username",
   PIPE: "pipe_challenge_uploader_username",
   STATS: "stats",
+  ORGANIZE_OPTION: "organize_option",
 };
 
 const GITHUB_API = {

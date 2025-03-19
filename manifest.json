@@ -24,11 +24,7 @@
     },
     {
       "matches": ["https://leetcode.com/*"],
-      "js": [
-        "scripts/leetcode/leetcode.js",
-        "scripts/storage.js",
-        "scripts/enable.js"
-      ],
+      "js": ["scripts/leetcode/leetcode.js", "scripts/util.js", "scripts/storage.js", "scripts/enable.js"],
       "run_at": "document_idle"
     },
     {
@@ -41,7 +37,6 @@
         "scripts/authorize.js",
         "scripts/storage.js",
         "scripts/enable.js",
-        "scripts/programmers/variables.js",
         "scripts/programmers/util.js",
         "scripts/programmers/parsing.js",
         "scripts/programmers/uploadfunctions.js",
