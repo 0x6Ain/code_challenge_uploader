@@ -1,5 +1,5 @@
 // Set to true to enable console log
-const debug = true;
+const debug = false;
 
 async function checkSubmissionStatus() {
   return new Promise((resolve) => {

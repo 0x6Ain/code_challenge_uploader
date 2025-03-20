@@ -49,8 +49,8 @@ function startSpinner() {
   if (!elem) {
     elem = document.createElement("span");
     elem.id = PUSH_BTN_ID;
-    elem.style = "margin-right: 20px;padding-top: 2px;";
   }
+  elem.style = "margin-right: 20px;padding-top: 2px;";
   elem.innerHTML = `<div id="${PUSH_BTN_ID}" class="${SPINNER_CLASS}"></div>`;
   startUploadCountDown();
 }
@@ -65,9 +65,7 @@ function markUploaded() {
   uploadState.uploading = false;
   const elem = document.getElementById(PUSH_BTN_ID);
   if (elem) {
-    elem.className = "";
-    style = "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid #78b13f;border-right:7px solid #78b13f;";
-    elem.style = style;
+    elem.style = "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid #78b13f;border-right:7px solid #78b13f;";
     elem.innerHTML = "";
   }
 }
@@ -75,9 +73,7 @@ function markUploadFailed() {
   uploadState.uploading = false;
   const elem = document.getElementById(PUSH_BTN_ID);
   if (elem) {
-    elem.className = "";
-    style = "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid red;border-right:7px solid red;";
-    elem.style = style;
+    elem.style = "display: inline-block;transform: rotate(45deg);height:24px;width:12px;border-bottom:7px solid red;border-right:7px solid red;";
     elem.innerHTML = "";
   }
 }

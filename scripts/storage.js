@@ -24,7 +24,6 @@ chrome.storage.local.get("isSync", (data) => {
     console.log("Local storage already synced!");
   }
 });
-getOrgOption().then((v) => console.log(v));
 
 /* stats 초기값이 없는 경우, 기본값을 생성하고 stats를 업데이트한다.
    만약 새로운 버전이 업데이트되었을 경우, 기존 submission은 업데이트를 위해 초기화 한다.
