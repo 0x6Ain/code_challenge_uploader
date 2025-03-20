@@ -1,3 +1,32 @@
+const languageExtensions = {
+  C: ".c",
+  "C++": ".cpp",
+  "C#": ".cs",
+  Bash: ".sh",
+  Dart: ".dart",
+  Elixir: ".ex",
+  Erlang: ".erl",
+  Go: ".go",
+  Java: ".java",
+  JavaScript: ".js",
+  Javascript: ".js",
+  Kotlin: ".kt",
+  MySQL: ".sql",
+  "MS SQL Server": ".sql",
+  Oracle: ".sql",
+  PHP: ".php",
+  Pandas: ".py",
+  PostgreSQL: ".sql",
+  Python: ".py",
+  Python3: ".py",
+  Racket: ".rkt",
+  Ruby: ".rb",
+  Rust: ".rs",
+  Scala: ".scala",
+  Swift: ".swift",
+  TypeScript: ".ts",
+};
+
 const difficultyLevel = {
   Easy: 1,
   Medium: 2,
@@ -37,7 +66,7 @@ async function parseData() {
     division = "";
     title = submission.question.title;
     problem_description = submission.question.content;
-    language_extension = submission.lang.verboseName;
+    language_extension = languageExtensions[submission.lang.verboseName];
     language = submission.lang.verboseName;
     code = submission.code;
     result_message = "";

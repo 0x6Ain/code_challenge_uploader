@@ -14,10 +14,8 @@ async function checkSubmissionStatus() {
         resolve(true);
       }
 
-      const failTag = document.querySelector('[data-e2e-locator="console-result"]');
-
       iterations++;
-      if (failTag || iterations >= maxIterations) {
+      if (iterations >= maxIterations) {
         clearInterval(intervalId);
         resolve(false);
       }
