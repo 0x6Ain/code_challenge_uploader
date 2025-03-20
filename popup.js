@@ -7,16 +7,15 @@ const UI = {
     $("#auth_mode").show();
   },
 
-  updateStats: (stats) => {
-    if (!stats?.solved) return;
-
-    $("#p_solved").text(stats.solved);
-    $("#p_solved_easy").text(stats.easy);
-    $("#p_solved_medium").text(stats.medium);
-    $("#p_solved_hard").text(stats.hard);
+  showHookMode: () => {
+    $("#hook_mode").show();
+    document.getElementById("common_user_info").hidden = false;
   },
 
-  updateRepoUrl: (hook) => {
+  showCommitMode: (hook) => {
+    $("#commit_mode").show();
+    document.getElementById("common_user_info").hidden = false;
+
     if (!hook) return;
 
     $("#repo_url").html(
@@ -26,8 +25,8 @@ const UI = {
   },
 
   updateUserInfo: (avatar, username) => {
-    updateUI.avatar(avatar);
-    updateUI.username(username);
+    document.getElementById("avatar").src = avatar;
+    document.getElementById("username").innerText = username;
   },
 };
 
@@ -57,44 +56,27 @@ const validateGithubToken = async (token) => {
 const initializePopup = async () => {
   try {
     // 토큰 확인
-    const { [STORAGE_KEYS.TOKEN]: token } = await chrome.storage.local.get(
-      STORAGE_KEYS.TOKEN
-    );
+    const { [STORAGE_KEYS.TOKEN]: token } = await chrome.storage.local.get(STORAGE_KEYS.TOKEN);
     if (!token) return UI.showAuthMode();
 
     // GitHub 토큰 검증
     await validateGithubToken(token);
 
     // 모드 확인 및 UI 업데이트
-    const { [STORAGE_KEYS.MODE]: mode } = await chrome.storage.local.get(
-      STORAGE_KEYS.MODE
-    );
+    const {
+      [STORAGE_KEYS.MODE]: mode,
+      [STORAGE_KEYS.AVATAR]: avatar,
+      [STORAGE_KEYS.USERNAME]: username,
+      [STORAGE_KEYS.HOOK]: hook,
+    } = await chrome.storage.local.get([STORAGE_KEYS.MODE, STORAGE_KEYS.AVATAR, STORAGE_KEYS.USERNAME, STORAGE_KEYS.HOOK]);
+    UI.updateUserInfo(avatar, username);
 
     switch (mode) {
       case "commit":
-        $("#commit_mode").show();
-        // stats와 hook 정보 가져오기
-        const { [STORAGE_KEYS.STATS]: stats, [STORAGE_KEYS.HOOK]: hook } =
-          await chrome.storage.local.get([
-            STORAGE_KEYS.STATS,
-            STORAGE_KEYS.HOOK,
-          ]);
-
-        UI.updateStats(stats);
-        UI.updateRepoUrl(hook);
+        UI.showCommitMode(hook);
         break;
       default:
-        $("#hook_mode").show();
-        // 사용자 정보 가져오기
-        const {
-          [STORAGE_KEYS.AVATAR]: avatar,
-          [STORAGE_KEYS.USERNAME]: username,
-        } = await chrome.storage.local.get([
-          STORAGE_KEYS.AVATAR,
-          STORAGE_KEYS.USERNAME,
-        ]);
-
-        UI.updateUserInfo(avatar, username);
+        UI.showHookMode();
         break;
     }
   } catch (error) {
@@ -112,16 +94,10 @@ initializePopup();
 chrome.storage.local.get("enable", (data4) => {
   if (data4.enable === undefined) {
     $("#onffbox").prop("checked", true);
-    chrome.storage.local.set(
-      { enable: $("#onffbox").is(":checked") },
-      () => {}
-    );
+    chrome.storage.local.set({ enable: $("#onffbox").is(":checked") }, () => {});
   } else {
     $("#onffbox").prop("checked", data4.enable);
-    chrome.storage.local.set(
-      { enable: $("#onffbox").is(":checked") },
-      () => {}
-    );
+    chrome.storage.local.set({ enable: $("#onffbox").is(":checked") }, () => {});
   }
 });
 /*

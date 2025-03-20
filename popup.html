@@ -26,22 +26,24 @@
           </button>
         </div>
 
-        <!-- Repo Hook mode -->
-        <div id="hook_mode" hidden>
+        <div id="common_user_info" hidden>
           <img id="avatar" alt="User Avatar" style="width: 100px; height: 100px; border-radius: 50%" />
           <p id="username"></p>
+        </div>
+
+        <!-- Repo Hook mode -->
+        <div id="hook_mode" hidden>
           <a id="hook_URL" href="" target="blank" class="ui secondary button">
             <i class="icon github"></i>
             Set up Repository
           </a>
         </div>
 
-        <!-- TODO -->
         <div id="commit_mode" hidden>
           <p id="repo_url" class="ui small header" style="margin-top: 5px; margin-bottom: 6px !important"></p>
-          commit_mode
           <!-- 기능 on/off -->
-          <div style="margin-top: 10px">
+          <div class="commit_container" style="margin-top: 10px">
+            <a id="welcome_URL" href="" target="_blank"><i class="ui grey globe icon"></i></a>
             <input type="checkbox" id="onffbox" />
             <label for="onffbox" id="onffmain">
               <span id="onffball"></span>
@@ -49,9 +51,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Welcome_URL -->
-      <a id="welcome_URL" href="" target="_blank"><i class="ui grey globe icon"></i></a>
     </div>
 
     <script src="utils/constants.js"></script>
