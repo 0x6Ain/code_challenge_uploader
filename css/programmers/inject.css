@@ -1,8 +1,8 @@
-#BaekjoonHub_progress_anchor_element {
+#progress_anchor_element {
   margin-right: 20px !important;
 }
 
-.BaekjoonHub_progress {
+.progress_spinner {
   display: inline-block;
   pointer-events: none;
   width: 2.3em;
@@ -19,7 +19,7 @@
   }
 }
 
-#BaekjoonHub_progress_elem.markuploadfailed {
+#progress_elem.markuploadfailed {
   display: inline-block;
   transform: rotate(45deg);
   width: 0.9em;
@@ -28,7 +28,7 @@
   border-right: 3px solid red;
 }
 
-#BaekjoonHub_progress_elem.markuploaded {
+#progress_elem.markuploaded {
   display: inline-block;
   transform: rotate(45deg);
   width: 0.9em;
@@ -51,7 +51,7 @@
 }
 
 .BJH_deletion_board {
-  display: 'block';
+  display: "block";
   position: fixed;
   z-index: 1;
   padding-top: 100px;

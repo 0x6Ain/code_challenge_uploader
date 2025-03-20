@@ -11,7 +11,7 @@ function startUpload() {
     elem.className = "runcode-wrapper__8rXm";
     elem.style = "margin-left: 10px;padding-top: 0px;";
   }
-  elem.innerHTML = `<div id="progress_elem" class="progress"></div>`;
+  elem.innerHTML = `<div id="progress_elem" class="progress_spinner"></div>`;
   const target = document.querySelector("#modal-dialog > div.modal-dialog > div.modal-content > div.modal-footer");
   if (!isNull(target)) {
     target.prepend(elem);
