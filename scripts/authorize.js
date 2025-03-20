@@ -10,8 +10,8 @@ const localAuth = {
   init() {
     this.KEY = "code_challenge_uploader_token";
     this.ACCESS_TOKEN_URL = "https://github.com/login/oauth/access_token";
-    this.AUTHORIZATION_URL = "https://github.com/login/oauth/authorize";
-    this.CLIENT_ID = "Ov23liyQV5yVqSKGky0S";
+    this.CLIENT_ID = "INPUT_YOUR_OWN";
+    this.CLIENT_SECRET = "INPUT_YOUR_OWN";
     this.REDIRECT_URL = "https://github.com/";
     this.SCOPES = ["repo"];
   },
@@ -42,6 +42,7 @@ const localAuth = {
     const that = this;
     const data = new FormData();
     data.append("client_id", this.CLIENT_ID);
+    data.append("client_secret", this.CLIENT_SECRET);
     data.append("code", code);
 
     const xhr = new XMLHttpRequest();
@@ -80,7 +81,8 @@ const localAuth = {
             closeWebPage: true,
             isSuccess: true,
             token,
-            username,
+            username: data.login,
+            avatar: data.avatar_url,
             KEY: this.KEY,
           });
         }
