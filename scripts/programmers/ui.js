@@ -4,14 +4,14 @@ const uploadState = { uploading: false };
  * 로딩 버튼 추가
  */
 function startUpload() {
-  let elem = document.getElementById("BaekjoonHub_progress_anchor_element");
+  let elem = document.getElementById("progress_anchor_element");
   if (elem !== undefined) {
     elem = document.createElement("span");
-    elem.id = "BaekjoonHub_progress_anchor_element";
+    elem.id = "progress_anchor_element";
     elem.className = "runcode-wrapper__8rXm";
     elem.style = "margin-left: 10px;padding-top: 0px;";
   }
-  elem.innerHTML = `<div id="BaekjoonHub_progress_elem" class="BaekjoonHub_progress"></div>`;
+  elem.innerHTML = `<div id="progress_elem" class="progress"></div>`;
   const target = document.querySelector("#modal-dialog > div.modal-dialog > div.modal-content > div.modal-footer");
   if (!isNull(target)) {
     target.prepend(elem);
@@ -29,7 +29,7 @@ function startUpload() {
  */
 function markUploadedCSS(branches, directory) {
   uploadState.uploading = false;
-  const elem = document.getElementById("BaekjoonHub_progress_elem");
+  const elem = document.getElementById("progress_elem");
   elem.className = "markuploaded";
   const uploadedUrl = "https://github.com/" + Object.keys(branches)[0] + "/tree/" + branches[Object.keys(branches)[0]] + "/" + directory;
   elem.addEventListener("click", function () {
@@ -43,7 +43,7 @@ function markUploadedCSS(branches, directory) {
  */
 function markUploadFailedCSS() {
   uploadState.uploading = false;
-  const elem = document.getElementById("BaekjoonHub_progress_elem");
+  const elem = document.getElementById("progress_elem");
   elem.className = "markuploadfailed";
 }
 

@@ -11,7 +11,7 @@ function getVersion() {
  * @returns {boolean} - 존재하면 true, 존재하지 않으면 false
  */
 function elementExists(element) {
-  return element !== undefined && element !== null && element.hasOwnProperty("length") && element.length > 0;
+  return element !== undefined && element !== null && element.length > 0; // TODO: find unexpected error by deleting element.hasOwnProperty("length")
 }
 
 /**
